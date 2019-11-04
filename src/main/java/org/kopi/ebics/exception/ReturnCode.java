@@ -41,7 +41,7 @@ public class ReturnCode implements Serializable {
    * standard code, symbolic name and text
    * @param code the given standard code.
    * @param symbolicName the symbolic name.
-   * @param the code text
+   * @param text the code text
    */
   public ReturnCode(String code, String symbolicName, String text) {
     this.code = code;
@@ -149,6 +149,7 @@ public class ReturnCode implements Serializable {
   public static final ReturnCode	EBICS_SIGNATURE_VERIFICATION_FAILED;
   public static final ReturnCode	EBICS_NO_DOWNLOAD_DATA_AVAILABLE;
   public static final ReturnCode    EBICS_ORDERID_ALREADY_EXISTS;
+  public static final ReturnCode    EBICS_AUTHORISATION_ORDER_TYPE_FAILED;
   private static final String		BUNDLE_NAME = "org.kopi.ebics.exception.messages";
   private static final long 		serialVersionUID = -497883146384363199L;
 
@@ -164,6 +165,7 @@ public class ReturnCode implements Serializable {
     EBICS_INTERNAL_ERROR = create("061099", "EBICS_INTERNAL_ERROR");
     EBICS_TX_RECOVERY_SYNC = create("061101", "EBICS_TX_RECOVERY_SYNC");
 
+    EBICS_AUTHORISATION_ORDER_TYPE_FAILED = create("090003", "EBICS_AUTHORISATION_ORDER_TYPE_FAILED");
     EBICS_NO_DOWNLOAD_DATA_AVAILABLE = create("090005", "EBICS_NO_DOWNLOAD_DATA_AVAILABLE");
     EBICS_INVALID_USER_OR_USER_STATE = create("091002", "EBICS_INVALID_USER_OR_USER_STATE");
     EBICS_USER_UNKNOWN = create("091003", "EBICS_USER_UNKNOWN");
@@ -181,9 +183,6 @@ public class ReturnCode implements Serializable {
     EBICS_MAX_TRANSACTIONS_EXCEEDED = create("091119", "EBICS_MAX_TRANSACTIONS_EXCEEDED");
     EBICS_X509_CERTIFICATE_NOT_VALID_YET = create("091209", "EBICS_X509_CERTIFICATE_NOT_VALID_YET");
     EBICS_SIGNATURE_VERIFICATION_FAILED = create("091301", "EBICS_SIGNATURE_VERIFICATION_FAILED");
-
-
-
   }
 
     private static ReturnCode create(String code, String symbolicName) {
