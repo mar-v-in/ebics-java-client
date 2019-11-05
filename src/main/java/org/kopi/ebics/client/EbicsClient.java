@@ -282,8 +282,8 @@ public class EbicsClient {
     /**
      * Sends an INI request to the ebics bank server
      *
-     * @param userId
-     *            the user ID
+     * @param user
+     *            the user
      * @param product
      *            the application product
      * @throws IOException
@@ -318,10 +318,10 @@ public class EbicsClient {
     /**
      * Sends a HIA request to the ebics server.
      *
-     * @param userId
-     *            the user ID.
+     * @param user
+     *            the user
      * @param product
-     *            the application product.
+     *            the application product
      * @throws IOException
      * @throws EbicsException
      */
@@ -379,10 +379,10 @@ public class EbicsClient {
     /**
      * Sends the SPR order to the bank.
      *
-     * @param userId
-     *            the user ID
+     * @param user
+     *            the user
      * @param product
-     *            the session product
+     *            the application product
      * @throws IOException
      * @throws EbicsException
      */
