@@ -44,4 +44,10 @@ public interface EbicsPartner {
    * @return the next order number.
    */
   public String nextOrderId();
+
+  /**
+   * Returns the last order number.
+   * @return the last order number.
+   */
+  public String lastOrderId();
 }

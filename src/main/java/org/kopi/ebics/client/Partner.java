@@ -126,12 +126,26 @@ public class Partner implements EbicsPartner, Savable {
       // ensure that orderId starts with a letter
       orderId = 10*36*36*36;
     }
+    needSave = true;
+
+    return encodeOrderId(orderId);
+  }
+
+  /**
+   * Returns the last order number.
+   * @return the last order number.
+   */
+  @Override
+  public String lastOrderId() {
+    return encodeOrderId(orderId);
+  }
+
+  private static String encodeOrderId(int orderId) {
+    final char[] chars = new char[4];
     chars[3] = ALPHA_NUM_CHARS.charAt(orderId % 36);
     chars[2] = ALPHA_NUM_CHARS.charAt((orderId / 36) % 36);
     chars[1] = ALPHA_NUM_CHARS.charAt((orderId / 36 / 36) % 36);
     chars[0] = ALPHA_NUM_CHARS.charAt(orderId / 36 / 36 / 36);
-    needSave = true;
-
     return new String(chars);
   }
 
