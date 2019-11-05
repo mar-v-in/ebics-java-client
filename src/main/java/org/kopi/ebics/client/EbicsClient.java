@@ -608,12 +608,16 @@ public class EbicsClient {
         };
     }
 
-    private void setDefaultProduct(Product product) {
-        this.defaultProduct = product;
-    }
-
     public User getDefaultUser() {
         return defaultUser;
+    }
+
+    public Product getDefaultProduct() {
+        return defaultProduct;
+    }
+
+    private void setDefaultProduct(Product product) {
+        this.defaultProduct = product;
     }
 
     private static void addOption(Options options, OrderType type, String description) {
