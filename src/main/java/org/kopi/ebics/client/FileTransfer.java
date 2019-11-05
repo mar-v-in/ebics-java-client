@@ -22,6 +22,7 @@ package org.kopi.ebics.client;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Date;
 
 import org.kopi.ebics.exception.EbicsException;
@@ -174,14 +175,14 @@ public class FileTransfer {
    * @param orderType type of file to fetch
    * @param start optional begin of fetch term
    * @param end optional end of fetch term
-   * @param dest where to put the data
+   * @param output where to put the data
    * @throws IOException communication error
    * @throws EbicsException server generated error
    */
   public void fetchFile(OrderType orderType,
                         Date start,
                         Date end,
-                        File outputFile)
+                        OutputStream output)
     throws IOException, EbicsException
   {
     HttpRequestSender			sender;
@@ -226,9 +227,8 @@ public class FileTransfer {
 	        joiner);
     }
 
-    try (FileOutputStream dest = new FileOutputStream(outputFile)) {
-        joiner.writeTo(dest, response.getTransactionKey());
-    }
+    joiner.writeTo(output, response.getTransactionKey());
+
     receipt = new ReceiptRequestElement(session,
 	                                state.getTransactionId(),
 	                                DefaultEbicsRootElement.generateName(orderType));

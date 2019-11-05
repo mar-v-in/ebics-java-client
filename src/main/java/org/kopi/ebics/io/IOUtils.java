@@ -143,7 +143,7 @@ public class IOUtils {
         }
     }
 
-    private static byte[] inputStreamToBytes(InputStream in) throws IOException {
+    public static byte[] inputStreamToBytes(InputStream in) throws IOException {
         int len;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];

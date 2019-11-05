@@ -23,8 +23,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
@@ -403,7 +405,7 @@ public class EbicsClient {
      * Sends a file to the ebics bank server
      * @throws Exception
      */
-    public void sendFile(File file, User user, Product product, OrderType orderType) throws Exception {
+    public void sendFile(InputStream input, User user, Product product, OrderType orderType) throws Exception {
         EbicsSession session = createSession(user, product);
         OrderAttributeType.Enum orderAttribute = OrderAttributeType.OZHNN;
 
@@ -413,20 +415,21 @@ public class EbicsClient {
             configuration.getTransferTraceDirectory(user));
 
         try {
-            transferManager.sendFile(IOUtils.getFileContent(file), orderType, orderAttribute);
+            transferManager.sendFile(IOUtils.inputStreamToBytes(input), orderType, orderAttribute);
         } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
-                Messages.getString("upload.file.error", Constants.APPLICATION_BUNDLE_NAME,
-                    file.getAbsolutePath()), e);
+                Messages.getString("upload.file.error", Constants.APPLICATION_BUNDLE_NAME), e);
             throw e;
         }
     }
 
     public void sendFile(File file, OrderType orderType) throws Exception {
-        sendFile(file, defaultUser, defaultProduct, orderType);
+        try (final InputStream input = new FileInputStream(file)) {
+            sendFile(input, defaultUser, defaultProduct, orderType);
+        }
     }
 
-    public void fetchFile(File file, User user, Product product, OrderType orderType,
+    public void fetchFile(OutputStream output, User user, Product product, OrderType orderType,
         boolean isTest, Date start, Date end) throws IOException, EbicsException {
         FileTransfer transferManager;
         EbicsSession session = createSession(user, product);
@@ -440,7 +443,7 @@ public class EbicsClient {
             configuration.getTransferTraceDirectory(user));
 
         try {
-            transferManager.fetchFile(orderType, start, end, file);
+            transferManager.fetchFile(orderType, start, end, output);
         } catch (NoDownloadDataAvailableException e) {
             // don't log this exception as an error, caller can decide how to handle
             throw e;
@@ -451,9 +454,10 @@ public class EbicsClient {
         }
     }
 
-    public void fetchFile(File file, OrderType orderType, Date start, Date end) throws IOException,
-        EbicsException {
-        fetchFile(file, defaultUser, defaultProduct, orderType, false, start, end);
+    public void fetchFile(File file, OrderType orderType, Date start, Date end) throws IOException, EbicsException {
+        try (final OutputStream out = new FileOutputStream(file)) {
+            fetchFile(out, defaultUser, defaultProduct, orderType, false, start, end);
+        }
     }
 
     /**
@@ -679,8 +683,7 @@ public class EbicsClient {
 
         for (OrderType type : fetchFileOrders) {
             if (hasOption(cmd, type)) {
-                client.fetchFile(getOutputFile(outputFileValue), client.defaultUser,
-                    client.defaultProduct, type, false, null, null);
+                client.fetchFile(getOutputFile(outputFileValue), type, null, null);
                 break;
             }
         }
@@ -689,8 +692,7 @@ public class EbicsClient {
             OrderType.XE2, OrderType.CCT);
         for (OrderType type : sendFileOrders) {
             if (hasOption(cmd, type)) {
-                client.sendFile(new File(inputFileValue), client.defaultUser,
-                    client.defaultProduct, type);
+                client.sendFile(new File(inputFileValue), type);
                 break;
             }
         }
