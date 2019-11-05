@@ -183,12 +183,14 @@ public class EbicsClient {
      *            a callback-handler that supplies us with the password. This
      *            parameter can be null, in this case no password is used.
      * @return
-     * @throws Exception
+     * @throws IOException
+     * @throws GeneralSecurityException
+     * @throws EbicsException
      */
     public User createUser(URL url, String bankName, String hostId, String partnerId,
         String userId, String name, String email, String country, String organization,
         boolean useCertificates, boolean saveCertificates, PasswordCallback passwordCallback)
-        throws Exception {
+        throws IOException, GeneralSecurityException, EbicsException {
         configuration.getLogger().info(
             Messages.getString("user.create.info", Constants.APPLICATION_BUNDLE_NAME, userId));
 
@@ -212,7 +214,7 @@ public class EbicsClient {
             configuration.getLogger().info(
                 Messages.getString("user.create.success", Constants.APPLICATION_BUNDLE_NAME, userId));
             return user;
-        } catch (Exception e) {
+        } catch (IOException | GeneralSecurityException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("user.create.error", Constants.APPLICATION_BUNDLE_NAME), e);
             throw e;
@@ -220,7 +222,7 @@ public class EbicsClient {
     }
 
     private void createLetters(EbicsUser user, boolean useCertificates)
-        throws GeneralSecurityException, IOException, EbicsException, FileNotFoundException {
+        throws IOException, GeneralSecurityException, EbicsException {
         user.getPartner().getBank().setUseCertificate(useCertificates);
         LetterManager letterManager = configuration.getLetterManager();
         List<InitLetter> letters = Arrays.asList(letterManager.createA005Letter(user),
@@ -237,10 +239,14 @@ public class EbicsClient {
     /**
      * Loads a user knowing its ID
      *
-     * @throws Exception
+     * @throws IOException
+     * @throws GeneralSecurityException
+     * @throws ClassNotFoundException
+     * @throws EbicsException
      */
     public User loadUser(String hostId, String partnerId, String userId,
-        PasswordCallback passwordCallback) throws Exception {
+        PasswordCallback passwordCallback)
+        throws IOException, GeneralSecurityException, ClassNotFoundException, EbicsException {
         configuration.getLogger().info(
             Messages.getString("user.load.info", Constants.APPLICATION_BUNDLE_NAME, userId));
 
@@ -266,7 +272,7 @@ public class EbicsClient {
             configuration.getLogger().info(
                 Messages.getString("user.load.success", Constants.APPLICATION_BUNDLE_NAME, userId));
             return user;
-        } catch (Exception e) {
+        } catch (IOException | GeneralSecurityException | ClassNotFoundException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("user.load.error", Constants.APPLICATION_BUNDLE_NAME), e);
             throw e;
@@ -280,9 +286,10 @@ public class EbicsClient {
      *            the user ID
      * @param product
      *            the application product
-     * @throws Exception
+     * @throws IOException
+     * @throws EbicsException
      */
-    public void sendINIRequest(User user, Product product) throws Exception {
+    public void sendINIRequest(User user, Product product) throws IOException, EbicsException {
         String userId = user.getUserId();
         configuration.getLogger().info(
             Messages.getString("ini.request.send", Constants.APPLICATION_BUNDLE_NAME, userId));
@@ -301,7 +308,7 @@ public class EbicsClient {
             user.setInitialized(true);
             configuration.getLogger().info(
                 Messages.getString("ini.send.success", Constants.APPLICATION_BUNDLE_NAME, userId));
-        } catch (Exception e) {
+        } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("ini.send.error", Constants.APPLICATION_BUNDLE_NAME, userId), e);
             throw e;
@@ -315,9 +322,10 @@ public class EbicsClient {
      *            the user ID.
      * @param product
      *            the application product.
-     * @throws Exception
+     * @throws IOException
+     * @throws EbicsException
      */
-    public void sendHIARequest(User user, Product product) throws Exception {
+    public void sendHIARequest(User user, Product product) throws IOException, EbicsException {
         String userId = user.getUserId();
         configuration.getLogger().info(
             Messages.getString("hia.request.send", Constants.APPLICATION_BUNDLE_NAME, userId));
@@ -334,7 +342,7 @@ public class EbicsClient {
         try {
             keyManager.sendHIA(null);
             user.setInitializedHIA(true);
-        } catch (Exception e) {
+        } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("hia.send.error", Constants.APPLICATION_BUNDLE_NAME, userId), e);
             throw e;
@@ -346,7 +354,7 @@ public class EbicsClient {
     /**
      * Sends a HPB request to the ebics server.
      */
-    public void sendHPBRequest(User user, Product product) throws Exception {
+    public void sendHPBRequest(User user, Product product) throws IOException, GeneralSecurityException, EbicsException {
         String userId = user.getUserId();
         configuration.getLogger().info(
             Messages.getString("hpb.request.send", Constants.APPLICATION_BUNDLE_NAME, userId));
@@ -361,7 +369,7 @@ public class EbicsClient {
             keyManager.sendHPB();
             configuration.getLogger().info(
                 Messages.getString("hpb.send.success", Constants.APPLICATION_BUNDLE_NAME, userId));
-        } catch (Exception e) {
+        } catch (IOException | GeneralSecurityException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("hpb.send.error", Constants.APPLICATION_BUNDLE_NAME, userId), e);
             throw e;
@@ -375,9 +383,10 @@ public class EbicsClient {
      *            the user ID
      * @param product
      *            the session product
-     * @throws Exception
+     * @throws IOException
+     * @throws EbicsException
      */
-    public void revokeSubscriber(User user, Product product) throws Exception {
+    public void revokeSubscriber(User user, Product product) throws IOException, EbicsException {
         String userId = user.getUserId();
 
         configuration.getLogger().info(
@@ -391,7 +400,7 @@ public class EbicsClient {
 
         try {
             keyManager.lockAccess();
-        } catch (Exception e) {
+        } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("spr.send.error", Constants.APPLICATION_BUNDLE_NAME, userId), e);
             throw e;
@@ -403,9 +412,10 @@ public class EbicsClient {
 
     /**
      * Sends a file to the ebics bank server
-     * @throws Exception
+     * @throws IOException
+     * @throws EbicsException
      */
-    public void sendFile(InputStream input, User user, Product product, OrderType orderType) throws Exception {
+    public void sendFile(InputStream input, User user, Product product, OrderType orderType) throws IOException, EbicsException {
         EbicsSession session = createSession(user, product);
         OrderAttributeType.Enum orderAttribute = OrderAttributeType.OZHNN;
 
@@ -423,7 +433,7 @@ public class EbicsClient {
         }
     }
 
-    public void sendFile(File file, OrderType orderType) throws Exception {
+    public void sendFile(File file, OrderType orderType) throws IOException, EbicsException {
         try (final InputStream input = new FileInputStream(file)) {
             sendFile(input, defaultUser, defaultProduct, orderType);
         }
@@ -447,7 +457,7 @@ public class EbicsClient {
         } catch (NoDownloadDataAvailableException e) {
             // don't log this exception as an error, caller can decide how to handle
             throw e;
-        } catch (Exception e) {
+        } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("download.file.error", Constants.APPLICATION_BUNDLE_NAME), e);
             throw e;
@@ -526,7 +536,7 @@ public class EbicsClient {
     }
 
     private User createUser(ConfigProperties properties, PasswordCallback pwdHandler)
-        throws Exception {
+        throws IOException, GeneralSecurityException, EbicsException {
         String userId = properties.get("userId");
         String partnerId = properties.get("partnerId");
         String bankUrl = properties.get("bank.url");
@@ -587,11 +597,11 @@ public class EbicsClient {
         return client;
     }
 
-    public void createDefaultUser() throws Exception {
+    public void createDefaultUser() throws IOException, GeneralSecurityException, EbicsException {
         defaultUser = createUser(properties, createPasswordCallback());
     }
 
-    public void loadDefaultUser() throws Exception {
+    public void loadDefaultUser() throws IOException, GeneralSecurityException, ClassNotFoundException, EbicsException {
         String userId = properties.get("userId");
         String hostId = properties.get("hostId");
         String partnerId = properties.get("partnerId");
