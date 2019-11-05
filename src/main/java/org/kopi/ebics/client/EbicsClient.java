@@ -512,6 +512,10 @@ public class EbicsClient {
             properties.load(new FileInputStream(file));
         }
 
+        public ConfigProperties(Properties properties) {
+            this.properties = properties;
+        }
+
         public String get(String key) {
             String value = properties.getProperty(key);
             if (value == null || value.isEmpty()) {
@@ -552,9 +556,15 @@ public class EbicsClient {
         return line;
     }
 
-    public static EbicsClient createEbicsClient(File rootDir, File configFile) throws FileNotFoundException,
-        IOException {
-        ConfigProperties properties = new ConfigProperties(configFile);
+    public static EbicsClient createEbicsClient(File rootDir, File configFile) throws IOException {
+        return createEbicsClient(rootDir, new ConfigProperties(configFile));
+    }
+
+    public static EbicsClient createEbicsClient(File rootDir, Properties properties) {
+        return createEbicsClient(rootDir, new ConfigProperties(properties));
+    }
+
+    private static EbicsClient createEbicsClient(File rootDir, ConfigProperties properties) {
         final String country = properties.get("countryCode").toUpperCase();
         final String language = properties.get("languageCode").toLowerCase();
         final String productName = properties.get("productName");
@@ -562,7 +572,6 @@ public class EbicsClient {
         final Locale locale = new Locale(language, country);
 
         DefaultConfiguration configuration = new DefaultConfiguration(rootDir.getAbsolutePath()) {
-
             @Override
             public Locale getLocale() {
                 return locale;
@@ -591,14 +600,12 @@ public class EbicsClient {
 
     private PasswordCallback createPasswordCallback() {
         final String password = properties.get("password");
-        PasswordCallback pwdHandler = new PasswordCallback() {
-
+        return new PasswordCallback() {
             @Override
             public char[] getPassword() {
                 return password.toCharArray();
             }
         };
-        return pwdHandler;
     }
 
     private void setDefaultProduct(Product product) {
