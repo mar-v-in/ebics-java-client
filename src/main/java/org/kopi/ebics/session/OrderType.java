@@ -41,6 +41,7 @@ public enum OrderType {
     CCC,
     CCT,
     CCU,
+    CIP,
     CD1,
     CDB,
     CDC,
@@ -59,5 +60,6 @@ public enum OrderType {
     XCT,
     C52,
     C53,
-    C54
+    C54,
+    C5N
 }

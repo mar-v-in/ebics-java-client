@@ -467,6 +467,9 @@ public class EbicsClient {
     public void fetchFile(File file, OrderType orderType, Date start, Date end) throws IOException, EbicsException {
         try (final OutputStream out = new FileOutputStream(file)) {
             fetchFile(out, defaultUser, defaultProduct, orderType, false, start, end);
+        } catch (EbicsException e) {
+            file.delete();
+            throw e;
         }
     }
 
@@ -650,6 +653,7 @@ public class EbicsClient {
         addOption(options, OrderType.C52, "Fetch camt.052 file");
         addOption(options, OrderType.C53, "Fetch camt.053 file");
         addOption(options, OrderType.C54, "Fetch camt.054 file");
+        addOption(options, OrderType.C5N, "Fetch C5N file (zip file with camt.054 documents)");
         addOption(options, OrderType.ZDF, "Fetch ZDF file (zip file with documents)");
         addOption(options, OrderType.ZB6, "Fetch ZB6 file");
         addOption(options, OrderType.PTK, "Fetch client protocol file (TXT)");
@@ -661,6 +665,7 @@ public class EbicsClient {
         addOption(options, OrderType.XCT, "Send XCT file (any format)");
         addOption(options, OrderType.XE2, "Send XE2 file (any format)");
         addOption(options, OrderType.CCT, "Send CCT file (any format)");
+        addOption(options, OrderType.CIP, "Send CIP file (any format)");
 
         options.addOption(null, "skip_order", true, "Skip a number of order ids");
 
@@ -699,7 +704,7 @@ public class EbicsClient {
         String inputFileValue = cmd.getOptionValue("i");
 
         List<OrderType> fetchFileOrders = Arrays.asList(OrderType.STA, OrderType.VMK,
-            OrderType.C52, OrderType.C53, OrderType.C54,
+            OrderType.C52, OrderType.C53, OrderType.C54, OrderType.C5N,
             OrderType.ZDF, OrderType.ZB6, OrderType.PTK, OrderType.HAC, OrderType.Z01);
 
         for (OrderType type : fetchFileOrders) {
@@ -710,7 +715,7 @@ public class EbicsClient {
         }
 
         List<OrderType> sendFileOrders = Arrays.asList(OrderType.XKD, OrderType.FUL, OrderType.XCT,
-            OrderType.XE2, OrderType.CCT);
+            OrderType.XE2, OrderType.CCT, OrderType.CIP);
         for (OrderType type : sendFileOrders) {
             if (hasOption(cmd, type)) {
                 client.sendFile(new File(inputFileValue), type);
