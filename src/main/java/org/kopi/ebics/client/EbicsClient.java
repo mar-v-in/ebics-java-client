@@ -659,6 +659,7 @@ public class EbicsClient {
         addOption(options, OrderType.PTK, "Fetch client protocol file (TXT)");
         addOption(options, OrderType.HAC, "Fetch client protocol file (XML)");
         addOption(options, OrderType.Z01, "Fetch Z01 file");
+        addOption(options, OrderType.CIZ, "Fetch CIZ file");
 
         addOption(options, OrderType.XKD, "Send payment order file (DTA format)");
         addOption(options, OrderType.FUL, "Send payment order file (any format)");
@@ -704,7 +705,7 @@ public class EbicsClient {
         String inputFileValue = cmd.getOptionValue("i");
 
         List<OrderType> fetchFileOrders = Arrays.asList(OrderType.STA, OrderType.VMK,
-            OrderType.C52, OrderType.C53, OrderType.C54, OrderType.C5N,
+            OrderType.C52, OrderType.C53, OrderType.C54, OrderType.C5N, OrderType.CIZ,
             OrderType.ZDF, OrderType.ZB6, OrderType.PTK, OrderType.HAC, OrderType.Z01);
 
         for (OrderType type : fetchFileOrders) {
