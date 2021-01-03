@@ -63,4 +63,7 @@ public enum OrderType {
     C54,
     C5N,
     CIZ,
+    CRC,
+    CRJ,
+    CRZ,
 }

@@ -148,8 +148,8 @@ public class DefaultEbicsLogger implements EbicsLogger {
    * Sets the logger level.
    * @param level the level to set
    */
-  public void setLevel(int level) {
-    logger.setLevel(Level.toLevel(level));
+  public void setLevel(Level level) {
+    logger.setLevel(level);
   }
 
   @Override
@@ -199,9 +199,4 @@ public class DefaultEbicsLogger implements EbicsLogger {
   private ConsoleAppender			consoleAppender;
   private RollingFileAppender			fileAppender;
   private File					logFile;
-
-  public static final int			ALL_LEVEL = Level.ALL_INT;
-  public static final int			INFO_LEVEL = Level.INFO_INT;
-  public static final int			WARN_LEVEL = Level.WARN_INT;
-  public static final int			ERROR_LEVEL = Level.ERROR_INT;
 }

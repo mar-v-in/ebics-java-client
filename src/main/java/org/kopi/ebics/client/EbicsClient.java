@@ -43,6 +43,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.log4j.Level;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.kopi.ebics.exception.EbicsException;
 import org.kopi.ebics.exception.NoDownloadDataAvailableException;
@@ -55,10 +56,7 @@ import org.kopi.ebics.interfaces.PasswordCallback;
 import org.kopi.ebics.io.IOUtils;
 import org.kopi.ebics.messages.Messages;
 import org.kopi.ebics.schema.h003.OrderAttributeType;
-import org.kopi.ebics.session.DefaultConfiguration;
-import org.kopi.ebics.session.EbicsSession;
-import org.kopi.ebics.session.OrderType;
-import org.kopi.ebics.session.Product;
+import org.kopi.ebics.session.*;
 import org.kopi.ebics.utils.Constants;
 
 /**
@@ -93,9 +91,9 @@ public class EbicsClient {
         this.configuration = configuration;
         this.properties = properties;
         Messages.setLocale(configuration.getLocale());
+        configuration.init();
         configuration.getLogger().info(
             Messages.getString("init.configuration", Constants.APPLICATION_BUNDLE_NAME));
-        configuration.init();
     }
 
     private EbicsSession createSession(User user, Product product) {
@@ -536,6 +534,14 @@ public class EbicsClient {
             }
             return value.trim();
         }
+
+        public String get(String key, String defaultValue) {
+            String value = properties.getProperty(key);
+            if (value == null || value.isEmpty()) {
+                return defaultValue;
+            }
+            return value.trim();
+        }
     }
 
     private User createUser(ConfigProperties properties, PasswordCallback pwdHandler)
@@ -578,18 +584,31 @@ public class EbicsClient {
     }
 
     private static EbicsClient createEbicsClient(File rootDir, ConfigProperties properties) {
-        final String country = properties.get("countryCode").toUpperCase();
-        final String language = properties.get("languageCode").toLowerCase();
+        final String country = properties.get("countryCode", "DE").toUpperCase();
+        final String language = properties.get("languageCode", "de").toLowerCase();
         final String productName = properties.get("productName");
 
         final Locale locale = new Locale(language, country);
+        final boolean logFileEnabled = Boolean.parseBoolean(properties.get("log.file.enabled", "true"));
+        final Level logLevel = Level.toLevel(properties.get("log.level", "ALL"), Level.ALL);
 
         DefaultConfiguration configuration = new DefaultConfiguration(rootDir.getAbsolutePath()) {
             @Override
             public Locale getLocale() {
                 return locale;
             }
+
+            @Override
+            public boolean isLogFileEnabled() {
+                return logFileEnabled;
+            }
+
+            @Override
+            public Level getLogLevel() {
+                return logLevel;
+            }
         };
+
 
         EbicsClient client = new EbicsClient(configuration, properties);
 
@@ -660,6 +679,9 @@ public class EbicsClient {
         addOption(options, OrderType.HAC, "Fetch client protocol file (XML)");
         addOption(options, OrderType.Z01, "Fetch Z01 file");
         addOption(options, OrderType.CIZ, "Fetch CIZ file");
+        addOption(options, OrderType.CRC, "Fetch CRC file");
+        addOption(options, OrderType.CRJ, "Fetch CRJ file");
+        addOption(options, OrderType.CRZ, "Fetch CRZ file");
 
         addOption(options, OrderType.XKD, "Send payment order file (DTA format)");
         addOption(options, OrderType.FUL, "Send payment order file (any format)");
@@ -706,8 +728,8 @@ public class EbicsClient {
 
         List<OrderType> fetchFileOrders = Arrays.asList(OrderType.STA, OrderType.VMK,
             OrderType.C52, OrderType.C53, OrderType.C54, OrderType.C5N, OrderType.CIZ,
-            OrderType.ZDF, OrderType.ZB6, OrderType.PTK, OrderType.HAC, OrderType.Z01);
-
+            OrderType.ZDF, OrderType.ZB6, OrderType.PTK, OrderType.HAC, OrderType.Z01,
+            OrderType.CRC, OrderType.CRJ, OrderType.CRZ);
         for (OrderType type : fetchFileOrders) {
             if (hasOption(cmd, type)) {
                 client.fetchFile(getOutputFile(outputFileValue), type, null, null);

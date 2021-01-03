@@ -27,6 +27,7 @@ import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
+import org.apache.log4j.Level;
 import org.kopi.ebics.exception.EbicsException;
 import org.kopi.ebics.interfaces.Configuration;
 import org.kopi.ebics.interfaces.EbicsLogger;
@@ -121,8 +122,9 @@ public class DefaultConfiguration implements Configuration {
     IOUtils.createDirectories(getUsersDirectory());
 
     logger.setLogFile(getLogDirectory() + File.separator + getLogFileName());
-    ((DefaultEbicsLogger)logger).setFileLoggingEnabled(true);
-    ((DefaultEbicsLogger)logger).setLevel(DefaultEbicsLogger.ALL_LEVEL);
+    ((DefaultEbicsLogger)logger).setFileLoggingEnabled(isLogFileEnabled());
+    ((DefaultEbicsLogger)logger).setLevel(getLogLevel());
+
     serializationManager.setSerializationDirectory(getSerializationDirectory());
     traceManager.setTraceEnabled(isTraceEnabled());
     letterManager = new DefaultLetterManager(getLocale());
@@ -141,6 +143,14 @@ public class DefaultConfiguration implements Configuration {
   @Override
   public String getLogFileName() {
     return getString("log.file.name");
+  }
+
+  public boolean isLogFileEnabled() {
+    return true;
+  }
+
+  public Level getLogLevel() {
+    return Level.ALL;
   }
 
   @Override
