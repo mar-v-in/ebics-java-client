@@ -413,7 +413,25 @@ public class EbicsClient {
      * @throws IOException
      * @throws EbicsException
      */
+    public void sendFile(File file, OrderType orderType) throws IOException, EbicsException {
+        try (final InputStream input = new FileInputStream(file)) {
+            sendFile(input, defaultUser, defaultProduct, orderType);
+        }
+    }
+
+    public void sendFile(InputStream input, OrderType orderType) throws IOException, EbicsException {
+        sendFile(input, this.defaultUser, this.defaultProduct, orderType);
+    }
+
+    public void sendFile(InputStream input, OrderType orderType, Integer orderId) throws IOException, EbicsException {
+        sendFile(input, this.defaultUser, this.defaultProduct, orderType, orderId);
+    }
+
     public void sendFile(InputStream input, User user, Product product, OrderType orderType) throws IOException, EbicsException {
+        sendFile(input, user, product, orderType, null);
+    }
+
+    public void sendFile(InputStream input, User user, Product product, OrderType orderType, Integer orderId) throws IOException, EbicsException {
         EbicsSession session = createSession(user, product);
         OrderAttributeType.Enum orderAttribute = OrderAttributeType.OZHNN;
 
@@ -423,17 +441,11 @@ public class EbicsClient {
             configuration.getTransferTraceDirectory(user));
 
         try {
-            transferManager.sendFile(IOUtils.inputStreamToBytes(input), orderType, orderAttribute);
+            transferManager.sendFile(IOUtils.inputStreamToBytes(input), orderType, orderAttribute, orderId);
         } catch (IOException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("upload.file.error", Constants.APPLICATION_BUNDLE_NAME), e);
             throw e;
-        }
-    }
-
-    public void sendFile(File file, OrderType orderType) throws IOException, EbicsException {
-        try (final InputStream input = new FileInputStream(file)) {
-            sendFile(input, defaultUser, defaultProduct, orderType);
         }
     }
 

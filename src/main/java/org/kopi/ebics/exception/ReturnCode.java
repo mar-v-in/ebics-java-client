@@ -54,7 +54,13 @@ public class ReturnCode implements Serializable {
    * @throws EbicsException
    */
   public void throwException() throws EbicsException {
-    throw new EbicsException(this, text);
+    if (equals(EBICS_NO_DOWNLOAD_DATA_AVAILABLE)) {
+      throw new NoDownloadDataAvailableException();
+    } else if (equals(EBICS_ORDERID_ALREADY_EXISTS)) {
+      throw new DuplicateOrderException();
+    } else {
+      throw new EbicsException(this, text);
+    }
   }
 
   /**

@@ -44,6 +44,7 @@ public class EbicsException extends Exception {
    * @param returnCode the ebics return code.
    */
   public EbicsException(ReturnCode returnCode) {
+    super(returnCode.getText());
     this.returnCode = returnCode;
   }
 

@@ -140,7 +140,7 @@ public class Partner implements EbicsPartner, Savable {
     return encodeOrderId(orderId);
   }
 
-  private static String encodeOrderId(int orderId) {
+  public static String encodeOrderId(int orderId) {
     final char[] chars = new char[4];
     chars[3] = ALPHA_NUM_CHARS.charAt(orderId % 36);
     chars[2] = ALPHA_NUM_CHARS.charAt((orderId / 36) % 36);

@@ -51,9 +51,6 @@ public class DownloadInitializationResponseElement extends InitializationRespons
   protected void processBodyReturnCode() throws EbicsException {
       String bodyRetCode = response.getBody().getReturnCode().getStringValue();
       returnCode = ReturnCode.toReturnCode(bodyRetCode, "");
-      if (returnCode.equals(ReturnCode.EBICS_NO_DOWNLOAD_DATA_AVAILABLE)) {
-        throw new NoDownloadDataAvailableException();
-      }
       checkReturnCode(returnCode);
   }
 
