@@ -172,13 +172,13 @@ public class DefaultConfiguration implements Configuration {
   }
 
   @Override
-  public String getKeystoreDirectory(EbicsUser user) {
-    return getUserDirectory(user) + File.separator + getString("keystore.dir.name");
+  public String getKeystoreDirectory(String userId) {
+    return getUserDirectory(userId) + File.separator + getString("keystore.dir.name");
   }
 
   @Override
-  public String getTransferTraceDirectory(EbicsUser user) {
-    return getUserDirectory(user) + File.separator + getString("traces.dir.name");
+  public String getTransferTraceDirectory(String userId) {
+    return getUserDirectory(userId) + File.separator + getString("traces.dir.name");
   }
 
   @Override
@@ -222,13 +222,13 @@ public class DefaultConfiguration implements Configuration {
   }
 
   @Override
-  public String getLettersDirectory(EbicsUser user) {
-    return getUserDirectory(user) + File.separator + getString("letters.dir.name");
+  public String getLettersDirectory(String userId) {
+    return getUserDirectory(userId) + File.separator + getString("letters.dir.name");
   }
 
   @Override
-  public String getUserDirectory(EbicsUser user) {
-    return getUsersDirectory() + File.separator + user.getUserId();
+  public String getUserDirectory(String userId) {
+    return getUsersDirectory() + File.separator + userId;
   }
 
   @Override

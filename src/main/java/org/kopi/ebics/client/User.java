@@ -64,7 +64,7 @@ public class User implements EbicsUser, Savable {
    * @param name the user name,
    * @param email the user email
    * @param country the user country
-   * @param organisation the user organization or company
+   * @param organization the user organization or company
    * @param passwordCallback a callback-handler that supplies us with the password.
    *                         This parameter can be null, in this case no password is used.
    * @throws IOException
@@ -100,6 +100,7 @@ public class User implements EbicsUser, Savable {
    */
   public User(EbicsPartner partner,
               ObjectInputStream ois,
+              String keystorePath,
               PasswordCallback passwordCallback)
     throws IOException, GeneralSecurityException, ClassNotFoundException
   {
@@ -110,12 +111,7 @@ public class User implements EbicsUser, Savable {
     this.dn = ois.readUTF();
     this.isInitialized = ois.readBoolean();
     this.isInitializedHIA = ois.readBoolean();
-    this.a005Certificate = (X509Certificate)ois.readObject();
-    this.e002Certificate = (X509Certificate)ois.readObject();
-    this.x002Certificate = (X509Certificate)ois.readObject();
-    this.a005PrivateKey = (PrivateKey)ois.readObject();
-    this.e002PrivateKey = (PrivateKey)ois.readObject();
-    this.x002PrivateKey = (PrivateKey)ois.readObject();
+    loadCertificates(keystorePath);
   }
 
   /**
@@ -188,12 +184,6 @@ public class User implements EbicsUser, Savable {
     oos.writeUTF(dn);
     oos.writeBoolean(isInitialized);
     oos.writeBoolean(isInitializedHIA);
-    oos.writeObject(a005Certificate);
-    oos.writeObject(e002Certificate);
-    oos.writeObject(x002Certificate);
-    oos.writeObject(a005PrivateKey);
-    oos.writeObject(e002PrivateKey);
-    oos.writeObject(x002PrivateKey);
     oos.flush();
     oos.close();
     needSave = false;
@@ -599,11 +589,11 @@ public class User implements EbicsUser, Savable {
   private transient boolean			needSave;
   private CertificateManager			manager;
 
-  private PrivateKey				a005PrivateKey;
-  private PrivateKey				e002PrivateKey;
-  private PrivateKey				x002PrivateKey;
+  private transient PrivateKey				a005PrivateKey;
+  private transient PrivateKey				e002PrivateKey;
+  private transient PrivateKey				x002PrivateKey;
 
-  private X509Certificate			a005Certificate;
-  private X509Certificate			e002Certificate;
-  private X509Certificate			x002Certificate;
+  private transient X509Certificate			a005Certificate;
+  private transient X509Certificate			e002Certificate;
+  private transient X509Certificate			x002Certificate;
 }

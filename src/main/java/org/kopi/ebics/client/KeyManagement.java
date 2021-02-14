@@ -150,7 +150,7 @@ public class KeyManagement {
     orderData.build();
     session.getConfiguration().getTraceManager().trace(orderData);
     keystoreManager = new KeyStoreManager();
-    path = session.getConfiguration().getKeystoreDirectory(session.getUser());
+    path = session.getConfiguration().getKeystoreDirectory(session.getUser().getUserId());
     keystoreManager.load("" , session.getUser().getPasswordCallback().getPassword());
 
     if (session.getUser().getPartner().getBank().useCertificate())

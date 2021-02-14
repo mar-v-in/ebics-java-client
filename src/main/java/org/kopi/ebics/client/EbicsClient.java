@@ -19,45 +19,27 @@
 
 package org.kopi.ebics.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.log4j.Level;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.kopi.ebics.exception.EbicsException;
 import org.kopi.ebics.exception.NoDownloadDataAvailableException;
-import org.kopi.ebics.interfaces.Configuration;
-import org.kopi.ebics.interfaces.EbicsBank;
-import org.kopi.ebics.interfaces.EbicsUser;
-import org.kopi.ebics.interfaces.InitLetter;
-import org.kopi.ebics.interfaces.LetterManager;
-import org.kopi.ebics.interfaces.PasswordCallback;
+import org.kopi.ebics.interfaces.*;
 import org.kopi.ebics.io.IOUtils;
 import org.kopi.ebics.messages.Messages;
 import org.kopi.ebics.schema.h003.OrderAttributeType;
-import org.kopi.ebics.session.*;
+import org.kopi.ebics.session.DefaultConfiguration;
+import org.kopi.ebics.session.EbicsSession;
+import org.kopi.ebics.session.OrderType;
+import org.kopi.ebics.session.Product;
 import org.kopi.ebics.utils.Constants;
+
+import java.io.*;
+import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * The ebics client application. Performs necessary tasks to contact the ebics
@@ -112,10 +94,10 @@ public class EbicsClient {
         configuration.getLogger().info(
             Messages.getString("user.create.directories", Constants.APPLICATION_BUNDLE_NAME,
                 user.getUserId()));
-        IOUtils.createDirectories(configuration.getUserDirectory(user));
-        IOUtils.createDirectories(configuration.getTransferTraceDirectory(user));
-        IOUtils.createDirectories(configuration.getKeystoreDirectory(user));
-        IOUtils.createDirectories(configuration.getLettersDirectory(user));
+        IOUtils.createDirectories(configuration.getUserDirectory(user.getUserId()));
+        IOUtils.createDirectories(configuration.getTransferTraceDirectory(user.getUserId()));
+        IOUtils.createDirectories(configuration.getKeystoreDirectory(user.getUserId()));
+        IOUtils.createDirectories(configuration.getLettersDirectory(user.getUserId()));
     }
 
     /**
@@ -199,7 +181,7 @@ public class EbicsClient {
                 passwordCallback);
             createUserDirectories(user);
             if (saveCertificates) {
-                user.saveUserCertificates(configuration.getKeystoreDirectory(user));
+                user.saveUserCertificates(configuration.getKeystoreDirectory(user.getUserId()));
             }
             configuration.getSerializationManager().serialize(bank);
             configuration.getSerializationManager().serialize(partner);
@@ -226,7 +208,7 @@ public class EbicsClient {
         List<InitLetter> letters = Arrays.asList(letterManager.createA005Letter(user),
             letterManager.createE002Letter(user), letterManager.createX002Letter(user));
 
-        File directory = new File(configuration.getLettersDirectory(user));
+        File directory = new File(configuration.getLettersDirectory(user.getUserId()));
         for (InitLetter letter : letters) {
             try (FileOutputStream out = new FileOutputStream(new File(directory, letter.getName()))) {
                 letter.writeTo(out);
@@ -262,7 +244,7 @@ public class EbicsClient {
             }
             try (ObjectInputStream input = configuration.getSerializationManager().deserialize(
                 "user-" + userId)) {
-                user = new User(partner, input, passwordCallback);
+                user = new User(partner, input, configuration.getKeystoreDirectory(userId), passwordCallback);
             }
             users.put(userId, user);
             partners.put(partner.getPartnerId(), partner);
@@ -300,7 +282,7 @@ public class EbicsClient {
         EbicsSession session = createSession(user, product);
         KeyManagement keyManager = new KeyManagement(session);
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
         try {
             keyManager.sendINI(null);
             user.setInitialized(true);
@@ -336,7 +318,7 @@ public class EbicsClient {
         EbicsSession session = createSession(user, product);
         KeyManagement keyManager = new KeyManagement(session);
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
         try {
             keyManager.sendHIA(null);
             user.setInitializedHIA(true);
@@ -361,7 +343,7 @@ public class EbicsClient {
         KeyManagement keyManager = new KeyManagement(session);
 
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
 
         try {
             keyManager.sendHPB();
@@ -394,7 +376,7 @@ public class EbicsClient {
         KeyManagement keyManager = new KeyManagement(session);
 
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
 
         try {
             keyManager.lockAccess();
@@ -438,7 +420,7 @@ public class EbicsClient {
         FileTransfer transferManager = new FileTransfer(session);
 
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
 
         try {
             transferManager.sendFile(IOUtils.inputStreamToBytes(input), orderType, orderAttribute, orderId);
@@ -460,7 +442,7 @@ public class EbicsClient {
         transferManager = new FileTransfer(session);
 
         configuration.getTraceManager().setTraceDirectory(
-            configuration.getTransferTraceDirectory(user));
+            configuration.getTransferTraceDirectory(user.getUserId()));
 
         try {
             transferManager.fetchFile(orderType, start, end, output);
@@ -694,6 +676,8 @@ public class EbicsClient {
         addOption(options, OrderType.CRC, "Fetch CRC file");
         addOption(options, OrderType.CRJ, "Fetch CRJ file");
         addOption(options, OrderType.CRZ, "Fetch CRZ file");
+        addOption(options, OrderType.HAA, "Fetch HAA file");
+        addOption(options, OrderType.HTD, "Fetch HTD file");
 
         addOption(options, OrderType.XKD, "Send payment order file (DTA format)");
         addOption(options, OrderType.FUL, "Send payment order file (any format)");
@@ -704,9 +688,11 @@ public class EbicsClient {
 
         options.addOption(null, "skip_order", true, "Skip a number of order ids");
 
-        options.addOption("o", "output", true, "output file");
-        options.addOption("i", "input", true, "input file");
+        options.addOption("o", "output", true, "Output file");
+        options.addOption("i", "input", true, "Input file");
 
+        options.addOption("s", "start", true, "Start date");
+        options.addOption("e", "end", true, "End date");
 
         CommandLine cmd = parseArguments(options, args);
 
@@ -738,13 +724,27 @@ public class EbicsClient {
         String outputFileValue = cmd.getOptionValue("o");
         String inputFileValue = cmd.getOptionValue("i");
 
+        String start = cmd.getOptionValue("s");
+        String end = cmd.getOptionValue("e");
+        Date startDate = null;
+        Date endDate = null;
+        if (start != null) {
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            startDate = format.parse(start);
+            endDate = end != null
+                    ? format.parse(end)
+                    : Date.from(Instant.now());
+        } else if (end != null) {
+            throw new EbicsException("Start date required if end date is given");
+        }
+
         List<OrderType> fetchFileOrders = Arrays.asList(OrderType.STA, OrderType.VMK,
             OrderType.C52, OrderType.C53, OrderType.C54, OrderType.C5N, OrderType.CIZ,
             OrderType.ZDF, OrderType.ZB6, OrderType.PTK, OrderType.HAC, OrderType.Z01,
-            OrderType.CRC, OrderType.CRJ, OrderType.CRZ);
+            OrderType.CRC, OrderType.CRJ, OrderType.CRZ, OrderType.HAA, OrderType.HTD);
         for (OrderType type : fetchFileOrders) {
             if (hasOption(cmd, type)) {
-                client.fetchFile(getOutputFile(outputFileValue), type, null, null);
+                client.fetchFile(getOutputFile(outputFileValue), type, startDate, endDate);
                 break;
             }
         }
@@ -771,7 +771,7 @@ public class EbicsClient {
 
     private static File getOutputFile(String outputFileName) {
         if (outputFileName == null || outputFileName.isEmpty()) {
-            throw new IllegalArgumentException("outputFileName not set");
+            throw new IllegalArgumentException("output file not set");
         }
         File file = new File(outputFileName);
         if (file.exists()) {

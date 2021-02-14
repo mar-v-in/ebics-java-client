@@ -65,22 +65,21 @@ public interface Configuration {
   /**
    * Returns the directory path of the key store that contains
    * bank and user certificates.
-   * @param the ebics user.
+   * @param userId the ebics user id
    * @return the key store directory of a given user.
    */
-  public String getKeystoreDirectory(EbicsUser user);
+  public String getKeystoreDirectory(String userId);
 
   /**
    * Returns the directory path that contains the traces
    * XML transfer files.
-   * @param user the ebics user
+   * @param userId the ebics user id
    * @return the transfer trace directory
    */
-  public String getTransferTraceDirectory(EbicsUser user);
+  public String getTransferTraceDirectory(String userId);
 
   /**
    * Returns the object serialization directory.
-   * @param user the ebics user
    * @return the object serialization directory.
    */
   public String getSerializationDirectory();
@@ -131,13 +130,13 @@ public interface Configuration {
    * Returns the initializations letters directory.
    * @return the initializations letters directory.
    */
-  public String getLettersDirectory(EbicsUser user);
+  public String getLettersDirectory(String userId);
 
   /**
    * Returns the users directory.
    * @return the users directory.
    */
-  public String getUserDirectory(EbicsUser user);
+  public String getUserDirectory(String userId);
 
   /**
    * Returns the client application logger.
