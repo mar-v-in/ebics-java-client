@@ -53,7 +53,26 @@ public class DefaultLetterManager implements LetterManager {
         A005Letter			letter;
 
         letter = new A005Letter(locale);
-        letter.create(user);
+        try {
+            letter.create(user);
+        } catch (Exception e) {
+            return null;
+        }
+        return letter;
+  }
+
+  @Override
+  public InitLetter createA006Letter(EbicsUser user)
+    throws GeneralSecurityException, IOException, EbicsException
+  {
+        A006Letter			letter;
+
+        letter = new A006Letter(locale);
+        try {
+            letter.create(user);
+        } catch (Exception e) {
+            return null;
+        }
         return letter;
   }
 

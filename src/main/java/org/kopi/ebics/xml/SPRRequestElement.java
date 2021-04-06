@@ -85,7 +85,7 @@ public class SPRRequestElement extends InitializationRequestElement {
 
     userSignature = new UserSignature(session.getUser(),
 				      generateName("SIG"),
-	                              session.getConfiguration().getSignatureVersion(),
+	                              session.getUser().getSignatureVersion(),
 	                              " ".getBytes());
     userSignature.build();
     userSignature.validate();

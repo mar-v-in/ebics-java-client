@@ -177,8 +177,14 @@ public class EbicsClient {
         Bank bank = createBank(url, bankName, hostId, useCertificates);
         Partner partner = createPartner(bank, partnerId);
         try {
-            User user = new User(partner, userId, name, email, country, organization,
-                passwordCallback);
+            User user;
+            if (defaultUser != null) {
+                user = defaultUser;
+                user.createUserCertificates();
+            } else {
+                user = new User(partner, userId, name, email, country, organization,
+                    passwordCallback);
+            }
             createUserDirectories(user);
             if (saveCertificates) {
                 user.saveUserCertificates(configuration.getKeystoreDirectory(user.getUserId()));
@@ -205,11 +211,12 @@ public class EbicsClient {
         throws IOException, GeneralSecurityException, EbicsException {
         user.getPartner().getBank().setUseCertificate(useCertificates);
         LetterManager letterManager = configuration.getLetterManager();
-        List<InitLetter> letters = Arrays.asList(letterManager.createA005Letter(user),
+        List<InitLetter> letters = Arrays.asList(letterManager.createA005Letter(user), letterManager.createA006Letter(user),
             letterManager.createE002Letter(user), letterManager.createX002Letter(user));
 
         File directory = new File(configuration.getLettersDirectory(user.getUserId()));
         for (InitLetter letter : letters) {
+            if (letter == null) continue;
             try (FileOutputStream out = new FileOutputStream(new File(directory, letter.getName()))) {
                 letter.writeTo(out);
             }
@@ -255,7 +262,7 @@ public class EbicsClient {
         } catch (IOException | GeneralSecurityException | ClassNotFoundException | EbicsException e) {
             configuration.getLogger().error(
                 Messages.getString("user.load.error", Constants.APPLICATION_BUNDLE_NAME), e);
-            throw e;
+            return null;
         }
     }
 
@@ -702,6 +709,7 @@ public class EbicsClient {
         EbicsClient client = createEbicsClient(defaultRootDir, ebicsClientProperties);
 
         if (cmd.hasOption("create")) {
+            client.loadDefaultUser();
             client.createDefaultUser();
         } else {
             client.loadDefaultUser();

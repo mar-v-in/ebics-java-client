@@ -43,6 +43,12 @@ public interface EbicsUser {
   public RSAPublicKey getA005PublicKey();
 
   /**
+   * Returns the public part of the signature key.
+   * @return the public part of the signature key.
+   */
+  public RSAPublicKey getA006PublicKey();
+
+  /**
    * Returns the public part of the encryption key.
    * @return the public part of the encryption key.
    */
@@ -60,6 +66,13 @@ public interface EbicsUser {
    * @throws EbicsException
    */
   public byte[] getA005Certificate() throws EbicsException;
+
+  /**
+   * Returns the signature certificate.
+   * @return the encryption certificate.
+   * @throws EbicsException
+   */
+  public byte[] getA006Certificate() throws EbicsException;
 
   /**
    * Returns the authentication certificate.
@@ -82,6 +95,12 @@ public interface EbicsUser {
   public void setA005Certificate(X509Certificate a005certificate);
 
   /**
+   * Sets the signature certificate.
+   * @param a005certificate the signature certificate.
+   */
+  public void setA006Certificate(X509Certificate a006certificate);
+
+  /**
    * Sets the authentication certificate.
    * @param a005certificate the authentication certificate.
    */
@@ -98,6 +117,12 @@ public interface EbicsUser {
    * @param a005Key the signature private key
    */
   public void setA005PrivateKey(PrivateKey a005Key);
+
+  /**
+   * Sets the signature private key
+   * @param a005Key the signature private key
+   */
+  public void setA006PrivateKey(PrivateKey a006Key);
 
   /**
    * Sets the authentication private key
@@ -147,6 +172,8 @@ public interface EbicsUser {
    */
   public PasswordCallback getPasswordCallback();
 
+  public String getSignatureVersion();
+
   /**
    * Signs the given digest with the private X002 key.
    * @param digest the given digest
@@ -156,7 +183,7 @@ public interface EbicsUser {
   public byte[] authenticate(byte[] digest) throws GeneralSecurityException;
 
   /**
-   * Signs the given digest with the private A005 key.
+   * Signs the given digest with the private A005/A006 key.
    * @param digest
    * @return the signature
    * @throws IOException

@@ -24,11 +24,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PSSParameterSpec;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -145,8 +148,8 @@ public class User implements EbicsUser, Savable {
    * @throws GeneralSecurityException
    * @throws IOException
    */
-  private void createUserCertificates() throws GeneralSecurityException, IOException {
-    manager = new CertificateManager(this);
+  public void createUserCertificates() throws GeneralSecurityException, IOException {
+    if (manager == null) manager = new CertificateManager(this);
     manager.create();
   }
 
@@ -318,6 +321,15 @@ public class User implements EbicsUser, Savable {
   }
 
   @Override
+  public byte[] getA006Certificate() throws EbicsException {
+    try {
+      return a006Certificate.getEncoded();
+    } catch (CertificateEncodingException e) {
+      throw new EbicsException(e.getMessage());
+    }
+  }
+
+  @Override
   public byte[] getE002Certificate() throws EbicsException {
     try {
       return e002Certificate.getEncoded();
@@ -342,6 +354,12 @@ public class User implements EbicsUser, Savable {
   }
 
   @Override
+  public void setA006Certificate(X509Certificate a006Certificate) {
+    this.a006Certificate = a006Certificate;
+    needSave = true;
+  }
+
+  @Override
   public void setE002Certificate(X509Certificate e002Certificate) {
     this.e002Certificate = e002Certificate;
     needSave = true;
@@ -359,6 +377,11 @@ public class User implements EbicsUser, Savable {
   }
 
   @Override
+  public RSAPublicKey getA006PublicKey() {
+    return (RSAPublicKey) a006Certificate.getPublicKey();
+  }
+
+  @Override
   public RSAPublicKey getE002PublicKey() {
     return (RSAPublicKey) e002Certificate.getPublicKey();
   }
@@ -371,6 +394,12 @@ public class User implements EbicsUser, Savable {
   @Override
   public void setA005PrivateKey(PrivateKey a005PrivateKey) {
     this.a005PrivateKey = a005PrivateKey;
+    needSave = true;
+  }
+
+  @Override
+  public void setA006PrivateKey(PrivateKey a006PrivateKey) {
+    this.a006PrivateKey = a006PrivateKey;
     needSave = true;
   }
 
@@ -409,6 +438,13 @@ public class User implements EbicsUser, Savable {
   @Override
   public String getDN() {
     return dn;
+  }
+
+  @Override
+  public String getSignatureVersion() {
+    if (this.a006PrivateKey != null) return "A006";
+    if (this.a005PrivateKey != null) return "A005";
+    return null;
   }
 
   @Override
@@ -510,10 +546,21 @@ public class User implements EbicsUser, Savable {
    */
   @Override
   public byte[] sign(byte[] digest) throws IOException, GeneralSecurityException {
-    Signature signature = Signature.getInstance("SHA256WithRSA", BouncyCastleProvider.PROVIDER_NAME);
-    signature.initSign(a005PrivateKey);
-    signature.update(removeOSSpecificChars(digest));
-    return signature.sign();
+    if (a006PrivateKey != null) {
+        // Apparently we hash things twice
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] encoded = md.digest(removeOSSpecificChars(digest));
+        Signature signature = Signature.getInstance("SHA256withRSA/PSS", BouncyCastleProvider.PROVIDER_NAME);
+        signature.setParameter(new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1));
+        signature.initSign(a006PrivateKey);
+        signature.update(encoded);
+        return signature.sign();
+    } else {
+        Signature signature = Signature.getInstance("SHA256WithRSA", BouncyCastleProvider.PROVIDER_NAME);
+        signature.initSign(a005PrivateKey);
+        signature.update(removeOSSpecificChars(digest));
+        return signature.sign();
+    }
   }
 
   /**
@@ -590,10 +637,12 @@ public class User implements EbicsUser, Savable {
   private CertificateManager			manager;
 
   private transient PrivateKey				a005PrivateKey;
+  private transient PrivateKey				a006PrivateKey;
   private transient PrivateKey				e002PrivateKey;
   private transient PrivateKey				x002PrivateKey;
 
   private transient X509Certificate			a005Certificate;
+  private transient X509Certificate			a006Certificate;
   private transient X509Certificate			e002Certificate;
   private transient X509Certificate			x002Certificate;
 }

@@ -23,9 +23,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,7 +61,11 @@ public class CertificateManager {
     calendar = Calendar.getInstance();
     calendar.add(Calendar.DAY_OF_YEAR, X509Constants.DEFAULT_DURATION);
 
-    createA005Certificate(new Date(calendar.getTimeInMillis()));
+    if (a006PrivateKey != null) {
+        createA006Certificate(new Date(calendar.getTimeInMillis()));
+    } else {
+        createA005Certificate(new Date(calendar.getTimeInMillis()));
+    }
     createX002Certificate(new Date(calendar.getTimeInMillis()));
     createE002Certificate(new Date(calendar.getTimeInMillis()));
     setUserCertificates();
@@ -69,11 +75,19 @@ public class CertificateManager {
    * Sets the user certificates
    */
   private void setUserCertificates() {
-    user.setA005Certificate(a005Certificate);
+    if (a006Certificate != null) {
+        user.setA006Certificate(a006Certificate);
+    } else {
+        user.setA005Certificate(a005Certificate);
+    }
     user.setX002Certificate(x002Certificate);
     user.setE002Certificate(e002Certificate);
 
-    user.setA005PrivateKey(a005PrivateKey);
+    if (a006PrivateKey != null) {
+        user.setA006PrivateKey(a006PrivateKey);
+    } else {
+        user.setA005PrivateKey(a005PrivateKey);
+    }
     user.setX002PrivateKey(x002PrivateKey);
     user.setE002PrivateKey(e002PrivateKey);
   }
@@ -87,12 +101,41 @@ public class CertificateManager {
   public void createA005Certificate(Date end) throws GeneralSecurityException, IOException {
     KeyPair			keypair;
 
-    keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    if (a005PrivateKey != null) {
+        java.security.interfaces.RSAPrivateCrtKey privateKey = (java.security.interfaces.RSAPrivateCrtKey) a005PrivateKey;
+        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new java.security.spec.RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
+        keypair = new KeyPair(publicKey, privateKey);
+    } else {
+        keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    }
     a005Certificate = generator.generateA005Certificate(keypair,
 	                                                user.getDN(),
 	                                                new Date(),
 	                                                end);
     a005PrivateKey = keypair.getPrivate();
+  }
+
+  /**
+   * Creates the signature certificate.
+   * @param the expiration date of a the certificate.
+   * @throws GeneralSecurityException
+   * @throws IOException
+   */
+  public void createA006Certificate(Date end) throws GeneralSecurityException, IOException {
+    KeyPair			keypair;
+
+    if (a006PrivateKey != null) {
+        java.security.interfaces.RSAPrivateCrtKey privateKey = (java.security.interfaces.RSAPrivateCrtKey) a006PrivateKey;
+        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new java.security.spec.RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
+        keypair = new KeyPair(publicKey, privateKey);
+    } else {
+        keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    }
+    a006Certificate = generator.generateA006Certificate(keypair,
+	                                                user.getDN(),
+	                                                new Date(),
+	                                                end);
+    a006PrivateKey = keypair.getPrivate();
   }
 
   /**
@@ -104,7 +147,13 @@ public class CertificateManager {
   public void createX002Certificate(Date end) throws GeneralSecurityException, IOException {
     KeyPair			keypair;
 
-    keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    if (x002PrivateKey != null) {
+        java.security.interfaces.RSAPrivateCrtKey privateKey = (java.security.interfaces.RSAPrivateCrtKey) x002PrivateKey;
+        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new java.security.spec.RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
+        keypair = new KeyPair(publicKey, privateKey);
+    } else {
+        keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    }
     x002Certificate = generator.generateX002Certificate(keypair,
 	                                                user.getDN(),
 	                                                new Date(),
@@ -121,7 +170,13 @@ public class CertificateManager {
   public void createE002Certificate(Date end) throws GeneralSecurityException, IOException {
     KeyPair			keypair;
 
-    keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    if (e002PrivateKey != null) {
+        java.security.interfaces.RSAPrivateCrtKey privateKey = (java.security.interfaces.RSAPrivateCrtKey) e002PrivateKey;
+        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new java.security.spec.RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
+        keypair = new KeyPair(publicKey, privateKey);
+    } else {
+        keypair = KeyUtil.makeKeyPair(X509Constants.EBICS_KEY_SIZE);
+    }
     e002Certificate = generator.generateE002Certificate(keypair,
 	                                                user.getDN(),
 	                                                new Date(),
@@ -162,10 +217,12 @@ public class CertificateManager {
 
     loader.load(path, pwdCallBack.getPassword());
     a005Certificate = loader.getCertificate(user.getUserId() + "-A005");
+    a006Certificate = loader.getCertificate(user.getUserId() + "-A006");
     x002Certificate = loader.getCertificate(user.getUserId() + "-X002");
     e002Certificate = loader.getCertificate(user.getUserId() + "-E002");
 
     a005PrivateKey = loader.getPrivateKey(user.getUserId() + "-A005");
+    a006PrivateKey = loader.getPrivateKey(user.getUserId() + "-A006");
     x002PrivateKey = loader.getPrivateKey(user.getUserId() + "-X002");
     e002PrivateKey = loader.getPrivateKey(user.getUserId() + "-E002");
     setUserCertificates();
@@ -207,10 +264,18 @@ public class CertificateManager {
 
     keystore = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
     keystore.load(null, null);
-    keystore.setKeyEntry(user.getUserId() + "-A005",
-	                 a005PrivateKey,
-	                 password,
-	                 new X509Certificate[] {a005Certificate});
+    if (a005Certificate != null && a005PrivateKey != null) {
+        keystore.setKeyEntry(user.getUserId() + "-A005",
+	                     a005PrivateKey,
+	                     password,
+	                     new X509Certificate[] {a005Certificate});
+    }
+    if (a006Certificate != null && a006PrivateKey != null) {
+        keystore.setKeyEntry(user.getUserId() + "-A006",
+	                     a006PrivateKey,
+	                     password,
+	                     new X509Certificate[] {a006Certificate});
+    }
     keystore.setKeyEntry(user.getUserId() + "-X002",
 	                 x002PrivateKey,
 	                 password,
@@ -230,10 +295,12 @@ public class CertificateManager {
   private EbicsUser					user;
 
   private X509Certificate				a005Certificate;
+  private X509Certificate				a006Certificate;
   private X509Certificate				e002Certificate;
   private X509Certificate				x002Certificate;
 
   private PrivateKey					a005PrivateKey;
+  private PrivateKey					a006PrivateKey;
   private PrivateKey					x002PrivateKey;
   private PrivateKey					e002PrivateKey;
 }

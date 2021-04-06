@@ -67,10 +67,6 @@ public class KeyStoreManager {
 
     cert = (X509Certificate) keyStore.getCertificate(alias);
 
-    if (cert == null) {
-      throw new IllegalArgumentException("alias " + alias + " not found in the KeyStore");
-    }
-
     return cert;
   }
 
@@ -84,9 +80,6 @@ public class KeyStoreManager {
     PrivateKey			key;
 
     key = (PrivateKey) keyStore.getKey(alias, password);
-    if (key == null) {
-      throw new IllegalArgumentException("private key not found for alias " + alias);
-    }
 
     return key;
   }

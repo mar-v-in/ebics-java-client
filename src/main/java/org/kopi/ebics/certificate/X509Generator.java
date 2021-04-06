@@ -84,6 +84,29 @@ public class X509Generator {
   }
 
   /**
+   * Generates the signature certificate for the EBICS protocol
+   * @param keypair the key pair
+   * @param issuer the certificate issuer
+   * @param notBefore the begin validity date
+   * @param notAfter the end validity date
+   * @return the signature certificate
+   * @throws GeneralSecurityException
+   * @throws IOException
+   */
+  public X509Certificate generateA006Certificate(KeyPair keypair,
+                                                 String issuer,
+		                                 Date notBefore,
+		                                 Date notAfter)
+    throws GeneralSecurityException, IOException
+  {
+    return generate(keypair,
+	            issuer,
+	            notBefore,
+	            notAfter,
+	            X509Constants.SIGNATURE_KEY_USAGE);
+  }
+
+  /**
    * Generates the authentication certificate for the EBICS protocol
    * @param keypair the key pair
    * @param issuer the certificate issuer

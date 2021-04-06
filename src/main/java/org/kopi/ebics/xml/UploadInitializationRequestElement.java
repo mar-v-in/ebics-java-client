@@ -97,7 +97,7 @@ public class UploadInitializationRequestElement extends InitializationRequestEle
 
         userSignature = new UserSignature(session.getUser(),
                 generateName("UserSignature"),
-                session.getConfiguration().getSignatureVersion(),
+                session.getUser().getSignatureVersion(),
                 userData);
         userSignature.build();
         userSignature.validate();
