@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -200,7 +201,7 @@ public class X509Generator {
     vector = new ASN1EncodableVector();
     vector.add(KeyPurposeId.id_kp_emailProtection);
 
-    generator.addExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(new DERSequence(vector)));
+    generator.addExtension(X509Extensions.ExtendedKeyUsage, false, ExtendedKeyUsage.getInstance(new DERSequence(vector)));
 
     switch (keyusage) {
     case X509Constants.SIGNATURE_KEY_USAGE:
@@ -247,7 +248,7 @@ public class X509Generator {
     vector = new ASN1EncodableVector();
     vector.add(new GeneralName(new X509Name(issuer)));
 
-    return new AuthorityKeyIdentifier(keyInfo, new GeneralNames(new DERSequence(vector)), serial);
+    return new AuthorityKeyIdentifier(keyInfo, GeneralNames.getInstance(new DERSequence(vector)), serial);
   }
 
   /**
@@ -266,7 +267,11 @@ public class X509Generator {
     input = new ByteArrayInputStream(publicKey.getEncoded());
     keyInfo = new SubjectPublicKeyInfo((ASN1Sequence)new ASN1InputStream(input).readObject());
 
-    return new SubjectKeyIdentifier(keyInfo);
+    try {
+      return new SubjectKeyIdentifier(MessageDigest.getInstance("SHA-1").digest(keyInfo.getPublicKeyData().getBytes()));
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   /**
